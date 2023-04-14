@@ -1,16 +1,20 @@
 const xlsx = require('xlsx');
 
-async function readExcelFile(fileLocation) {
-  try {
-    console.log(`Reading Excel file`);
-    const workbook = xlsx.readFile(fileLocation);
+const readExcelFile = async(excelFile) => {
+  return new Promise((resolve, reject) => {
+    console.log('Reading Excel file..');
+    const workbook = xlsx.readFile(excelFile);
     const sheetNames = workbook.SheetNames;
     const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]]);
-    return excelData;
-  } catch (error) {
-    console.log(`Failed to read Excel file`);
-    console.error(error);
-  }
+
+    if (excelData) {
+      console.log('Successfully read Excel file!');
+      console.log(`Retrieved Excel data: ${excelData}`);
+      resolve(excelData);
+    } else {
+      reject(new Error('No data found in Excel file'));
+    }
+  });
 }
 
 module.exports = {
