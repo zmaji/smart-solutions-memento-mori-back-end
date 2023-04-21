@@ -12,6 +12,7 @@ const host = 'localhost';
 const database = 'StichtingMementoMori';
 const password = '79*ezCBin4XU';
 const port = '5432';
+const tableName = 'Personen'
 
 const app = express();
 app.use(bodyParser.json());
@@ -52,7 +53,7 @@ const syncDatabase = async () => {
   if (databaseClient && people && people.length) {
 
     // Compare and update the database
-    await compareAndUpdateData(people, 'Personen', databaseClient, limiter);
+    await compareAndUpdateData(people, tableName, databaseClient, limiter);
   }
 }
 
