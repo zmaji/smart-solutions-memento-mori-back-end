@@ -15,17 +15,20 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
       const remainingTokens = await limiter.removeTokens(1)
       console.log('Remaining tokens:' , remainingTokens)
 
+      const grafnummer = excelRow.Grafnummer.toString();
+
       // Select all data from the tablename with a matching 'grafnummer'
       const selectQuery = {
         text: `SELECT * FROM "${tableName}" WHERE grave_id = $1`,
-        values: [excelRow.Grafnummer]
+        values: [grafnummer]
       };
       const results = await client.query(selectQuery);
 
       // If a matching row is found, update it
       if (results.rows.length > 0) {
-        console.log(`Matching row with id ${excelRow.Grafnummer} found in ${tableName}!`);
-        console.log(`Looking for values to be updated in row with id ${excelRow.Grafnummer} in ${tableName}`);
+        console.log(`Matching row with grafnummer ${excelRow.Grafnummer} found in ${tableName}!`);
+        console.log(excelRow);
+        console.log(`Looking for values to be updated in row with grafnummer ${excelRow.Grafnummer} in ${tableName}`);
 
         const updateQuery = {
           text: `
@@ -48,16 +51,16 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
           pupil_tot = CASE WHEN pupil_tot <> $15 THEN $15 ELSE pupil_tot END,
           bijzonderheden = CASE WHEN bijzonderheden <> $16 THEN $16 ELSE bijzonderheden END,
           reden_overlijden = CASE WHEN reden_overlijden <> $17 THEN $17 ELSE reden_overlijden END
-          WHERE grave_id = ${excelRow.Grafnummer};`,
+          WHERE grave_id = '${grafnummer}';`,
           values: [excelRow.Achternaam, excelRow.Tussenvoegsel, excelRow.Voornamen, excelRow.Roepnaam, excelRow.Sexe, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Geboortedatum, excelRow.Overlijden, excelRow.Leeftijd, excelRow.Begraven, excelRow.RolNeerbosch, excelRow.Functie, excelRow.VoorheenPupil, excelRow.VoorheenPupil, excelRow.Bijzonderheden, excelRow.RedenOverlijden]
         };
 
         await client.query(updateQuery);
-        console.log(`Successfully updated row with id ${excelRow.Grafnummer} in ${tableName}!`);
+        console.log(`Successfully updated row with grafnummer ${excelRow.Grafnummer} in ${tableName}!`);
       } else {
         // If no matching row is found, insert a new row
-        console.log(`No matching row with id ${excelRow.Grafnummer} found in ${tableName}!`);
-        console.log(`Inserting row with id ${excelRow.Grafnummer}..`);
+        console.log(`No matching row with grafnummer ${excelRow.Grafnummer} found in ${tableName}!`);
+        console.log(`Inserting row with grafnummer ${excelRow.Grafnummer}..`);
         const uuid = uuidv4();
         
         const insertQuery = {

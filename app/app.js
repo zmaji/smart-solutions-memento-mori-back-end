@@ -44,8 +44,6 @@ const syncDatabase = async () => {
   // Read all people from the Excel file
   const people = await readExcelFile(excelFile);
 
-  console.log(people[0]);
-
   // Create a client that connects the database to the application
   const databaseClient = await createClient(user, host, database, password, port);
 
