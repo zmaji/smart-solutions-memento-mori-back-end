@@ -8,6 +8,7 @@ const CronJob = require('cron').CronJob;
 const { readExcelFile } = require('./data/readExcel');
 const { createClient } = require('./database/createClient');
 const { compareAndUpdateData } = require('./database/compareAndUpdateData');
+const { getPeople } = require('./database/getPeople');
 
 // Variables
 const excelFile = '../app/files/2021-StMM-Overzicht-Weezenkerkhof.xlsx'
@@ -32,8 +33,14 @@ app.listen(3000, () => {
   console.log('Stichting Memento Mori back-end app listening on port 3000!');
 });
 
-app.get('/', (req, res) => {
+app.get('/sync', () => {
   syncDatabase();
+});
+
+app.get('/getPeople', async (req, res) => {
+  const databaseClient = await createClient(user, host, database, password, port);
+  results = await getPeople(databaseClient, tableName);
+  res.send(results.rows);
 });
 
 // Sync the database and update or add rows
