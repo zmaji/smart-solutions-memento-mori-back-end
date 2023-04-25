@@ -1,11 +1,15 @@
+// Dependencies
 const express = require('express');
 const { RateLimiterMemory, RateLimiterQueue } = require('rate-limiter-flexible');
 const bodyParser = require('body-parser');
+const CronJob = require('cron').CronJob;
 
+// Imported methods
 const { readExcelFile } = require('./data/readExcel');
 const { createClient } = require('./database/createClient');
 const { compareAndUpdateData } = require('./database/compareAndUpdateData');
 
+// Variables
 const excelFile = '../app/files/2021-StMM-Overzicht-Weezenkerkhof.xlsx'
 const user = 'postgres';
 const host = 'localhost';
@@ -14,6 +18,12 @@ const password = '79*ezCBin4XU';
 const port = '5432';
 const tableName = 'Personen'
 
+const APILimits = {
+  points: 100, // Requests
+  duration: 10, // Seconds
+}
+
+// Creating an app
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -25,11 +35,6 @@ app.listen(3000, () => {
 app.get('/', (req, res) => {
   syncDatabase();
 });
-
-const APILimits = {
-  points: 100, // Requests
-  duration: 10, // Seconds
-}
 
 // Sync the database and update or add rows
 const syncDatabase = async () => {
@@ -56,16 +61,15 @@ const syncDatabase = async () => {
 }
 
 // CronJob runs every first day of the month at 00.00 CET
-// const jobCron = new CronJob({
-//   cronTime: '0 0 1 * *',
-//   runOnInit: false,
-//   onTick: () => {
-//     syncDatabase.log('This cronjob will run every month');
-//     syncHubDB();
-//   },
-//   start: false,
-//   timeZone: 'Europe/Amsterdam'
-// })
+const jobCron = new CronJob({
+  cronTime: '0 0 1 * *',
+  runOnInit: false,
+  onTick: () => {
+    console.log('This cronjob will run every month');
+    syncDatabase();
+  },
+  start: false,
+  timeZone: 'Europe/Amsterdam'
+})
 
-// jobCron.start();
-// }
+jobCron.start();
