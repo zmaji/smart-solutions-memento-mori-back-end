@@ -3,6 +3,7 @@ const express = require('express');
 const { RateLimiterMemory, RateLimiterQueue } = require('rate-limiter-flexible');
 const bodyParser = require('body-parser');
 const CronJob = require('cron').CronJob;
+const cors = require('cors');
 
 // Imported methods
 const { readExcelFile } = require('./data/readExcel');
@@ -28,6 +29,7 @@ const APILimits = {
 const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors({ origin: 'http://localhost:8080' }));
 
 app.listen(3000, () => {
   console.log('Stichting Memento Mori back-end app listening on port 3000!');
@@ -38,9 +40,14 @@ app.get('/sync', () => {
 });
 
 app.get('/getPeople', async (req, res) => {
-  const databaseClient = await createClient(user, host, database, password, port);
-  results = await getPeople(databaseClient, tableName);
-  res.send(results.rows);
+  try {
+    const databaseClient = await createClient(user, host, database, password, port);
+    const rows = await getPeople(databaseClient, '"Personen"');
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('An error occurred while getting data.');
+  }
 });
 
 // Sync the database and update or add rows
