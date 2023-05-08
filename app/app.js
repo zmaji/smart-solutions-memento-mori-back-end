@@ -41,8 +41,11 @@ app.get('/sync', () => {
 
 app.get('/getPeople', async (req, res) => {
   try {
+    const { count, search  } = req.query;
+    console.log(`SEARCH:`);
+    console.log(search);
     const databaseClient = await createClient(user, host, database, password, port);
-    const rows = await getPeople(databaseClient, '"Personen"');
+    const rows = await getPeople(databaseClient, '"Personen"', search);
     res.json(rows);
   } catch (err) {
     console.error(err);
