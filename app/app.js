@@ -41,11 +41,13 @@ app.get('/sync', () => {
 
 app.get('/getPeople', async (req, res) => {
   try {
-    const { count, search  } = req.query;
-    console.log(`SEARCH:`);
+    const { category, search  } = req.query;
+    console.log(`SEARCH1:`);
     console.log(search);
+    console.log(`CATEGORIES1:`);
+    console.log(category);
     const databaseClient = await createClient(user, host, database, password, port);
-    const rows = await getPeople(databaseClient, '"Personen"', search);
+    const rows = await getPeople(databaseClient, '"Personen"', search, category);
     res.json(rows);
   } catch (err) {
     console.error(err);
