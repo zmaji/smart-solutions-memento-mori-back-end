@@ -11,8 +11,6 @@ async function getPeople(client, tableName, searchText, categories) {
     } else if (Array.isArray(categories) && categories.length > 1) {
       const categoryList = categories.join("', '");
       queryText += `${searchText ? ' AND' : ' WHERE'} rol IN ('${categoryList}')`;
-    } else if (categories.length === 1) {
-      queryText += `${searchText ? ' AND' : ' WHERE'} rol LIKE '${categories[0]}'`;
     }
   }
 
