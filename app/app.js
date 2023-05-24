@@ -18,7 +18,6 @@ const host = 'localhost';
 const database = 'StichtingMementoMori';
 const password = '79*ezCBin4XU';
 const port = '5432';
-const tableName = 'Personen'
 
 const APILimits = {
   points: 100, // Requests
@@ -35,17 +34,9 @@ app.listen(3000, () => {
   console.log('Stichting Memento Mori back-end app listening on port 3000!');
 });
 
-app.get('/sync', () => {
-  syncDatabase();
-});
-
 app.get('/getPeople', async (req, res) => {
   try {
     const { category, search  } = req.query;
-    console.log(`SEARCH1:`);
-    console.log(search);
-    console.log(`CATEGORIES1:`);
-    console.log(category);
     const databaseClient = await createClient(user, host, database, password, port);
     const rows = await getPeople(databaseClient, '"Personen"', search, category);
     res.json(rows);
@@ -59,11 +50,8 @@ app.get('/getPeople', async (req, res) => {
 const syncDatabase = async () => {
   console.log('Starting the sync with the PostgreSQL database..')
 
-  // Maximum amount of requests
-  const rateLimiter = new RateLimiterMemory(APILimits);
-
-  // Add functionality to process queue after again after 10 seconds
-  const limiter = new RateLimiterQueue(rateLimiter);
+  // Maximum amount of requests and add functionality to process queue after again after 10 seconds
+  const limiter = new RateLimiterQueue(new RateLimiterMemory(APILimits));
 
   // Read all people from the Excel file
   const people = await readExcelFile(excelFile);
@@ -71,24 +59,21 @@ const syncDatabase = async () => {
   // Create a client that connects the database to the application
   const databaseClient = await createClient(user, host, database, password, port);
 
-  // Get all rows of the 'Personen' table based on the client
-  if (databaseClient && people && people.length) {
-
-    // Compare and update the database
-    await compareAndUpdateData(people, tableName, databaseClient, limiter);
-  }
+  // Compare and update the database
+  await compareAndUpdateData(people, tableName, databaseClient, limiter);
 }
 
+app.get('/sync', () => {
+  syncDatabase();
+});
+
 // CronJob runs every first day of the month at 00.00 CET
-const jobCron = new CronJob({
-  cronTime: '0 0 1 * *',
-  runOnInit: false,
-  onTick: () => {
-    console.log('This cronjob will run every month');
-    syncDatabase();
-  },
-  start: false,
-  timeZone: 'Europe/Amsterdam'
-})
+const jobCron = new CronJob('0 0 1 * *', () => {
+  console.log('This cronjob will run every month');
+  syncDatabase();
+}, {
+  timeZone: 'Europe/Amsterdam',
+});
 
 jobCron.start();
+

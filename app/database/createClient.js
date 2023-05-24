@@ -1,26 +1,25 @@
 const { Client } = require('pg');
 
-const createClient = async(user, host, database, password, port) => {
-  return new Promise((resolve, reject) => {
-    console.log(`Connecting to the PostgreSQL database..`)
-    const client = new Client({
-      user: user,
-      host: host,
-      database: database,
-      password: password,
-      port: port,
-    });
-
-    if (client) {
-      console.log('Connected to PostgreSQL database');
-      client.connect();
-      resolve(client);
-    } else {
-      reject(new Error(`Error connecting to the PostgreSQL database`));
-    }
+const createClient = async (user, host, database, password, port) => {
+  console.log('Connecting to the PostgreSQL database..');
+  const client = new Client({
+    user,
+    host,
+    database,
+    password,
+    port,
   });
-}
+
+  try {
+    await client.connect();
+    console.log('Connected to PostgreSQL database');
+    return client;
+  } catch (error) {
+    console.error('Error connecting to the PostgreSQL database:', error);
+    throw error;
+  }
+};
 
 module.exports = {
-  createClient
-}
+  createClient,
+};

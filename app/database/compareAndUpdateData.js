@@ -1,16 +1,9 @@
 const { v4: uuidv4 } = require('uuid');
 
-async function formatDate(date) {
-  console.log(`TYPE OF: typeof ${date}`);
-  const dateParts = date.split('-'); // Split the string into year, month, and day parts
-  const dateObject = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]); // Create a Date object from the parts (note that month is zero-indexed)
-  const outputDate = dateObject.toLocaleDateString('en-GB'); // Format the Date object into a string with dd-mm-yyyy format
-  return outputDate;
-}
-
 async function compareAndUpdateData(excelData, tableName, client, limiter) {
   console.log(`Comparing data with database..`);
     for (const excelRow of excelData) {
+
       // Log the remaining tokens and limit the requests
       const remainingTokens = await limiter.removeTokens(1)
       console.log('Remaining tokens:' , remainingTokens)
@@ -51,8 +44,10 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
           pupil_tot = CASE WHEN pupil_tot <> $15 THEN $15 ELSE pupil_tot END,
           bijzonderheden = CASE WHEN bijzonderheden <> $16 THEN $16 ELSE bijzonderheden END,
           reden_overlijden = CASE WHEN reden_overlijden <> $17 THEN $17 ELSE reden_overlijden END
-          WHERE grave_id = '${grafnummer}';`,
-          values: [excelRow.Achternaam, excelRow.Tussenvoegsel, excelRow.Voornamen, excelRow.Roepnaam, excelRow.Sexe, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Geboortedatum, excelRow.Overlijden, excelRow.Leeftijd, excelRow.Begraven, excelRow.RolNeerbosch, excelRow.Functie, excelRow.VoorheenPupil, excelRow.VoorheenPupil, excelRow.Bijzonderheden, excelRow.RedenOverlijden]
+          WHERE grave_id = '${18}';`,
+          values: [
+            excelRow.Achternaam, excelRow.Tussenvoegsel, excelRow.Voornamen, excelRow.Roepnaam, excelRow.Sexe, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Geboortedatum, excelRow.Overlijden, excelRow.Leeftijd, excelRow.Begraven, excelRow.RolNeerbosch, excelRow.Functie, excelRow.VoorheenPupil, excelRow.VoorheenPupil, excelRow.Bijzonderheden, excelRow.RedenOverlijden
+          ]
         };
 
         await client.query(updateQuery);
