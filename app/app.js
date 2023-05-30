@@ -18,6 +18,7 @@ const host = 'localhost';
 const database = 'StichtingMementoMori';
 const password = '79*ezCBin4XU';
 const port = '5432';
+const tableName = 'Personen'
 
 const APILimits = {
   points: 100, // Requests
@@ -64,6 +65,7 @@ const syncDatabase = async () => {
 }
 
 app.get('/sync', () => {
+  console.log('Visited the sync endpoint..')
   syncDatabase();
 });
 
