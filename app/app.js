@@ -12,7 +12,7 @@ const { compareAndUpdateData } = require('./database/compareAndUpdateData');
 const { getPeople } = require('./database/getPeople');
 
 // Variables
-const excelFile = '../app/files/2021-StMM-Overzicht-Weezenkerkhof.xlsx'
+const excelFile = '../app/files/2023-StMM-Overzicht-Weezenkerkhof.xlsx'
 const user = 'postgres';
 const host = 'localhost';
 const database = 'StichtingMementoMori';
@@ -64,9 +64,16 @@ const syncDatabase = async () => {
   await compareAndUpdateData(people, tableName, databaseClient, limiter);
 }
 
-app.get('/sync', () => {
-  console.log('Visited the sync endpoint..')
-  syncDatabase();
+app.get('/sync', async (req, res) => {
+  try {
+    console.log('Visited the sync endpoint..');
+    await syncDatabase();
+    console.log('Database synchronization succeeded!');
+    res.status(200).send('Database synchronization succeeded!');
+  } catch (error) {
+    console.error('Database synchronization failed:', error);
+    res.status(500).send('Database synchronization failed!');
+  }
 });
 
 // CronJob runs every first day of the month at 00.00 CET
