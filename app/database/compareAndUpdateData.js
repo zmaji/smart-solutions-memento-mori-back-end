@@ -8,26 +8,21 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
       const remainingTokens = await limiter.removeTokens(1)
       console.log('Remaining tokens:' , remainingTokens)
 
-      // const grafnummer = excelRow.Grafnummer.toString();
-      const tableReference = excelRow.Grafnummer !== undefined ? excelRow.Grafnummer.toString() : 'Onbekend';
-      let searchReference = `grave_id = ${tableReference}`;
-
-      if (tableReference === 'Onbekend') {
-        searchReference = `voornamen = ${excelRow.Voornamen} AND tussenvoegsel = ${excelRow.Tussenvoegsel} and achternaam = ${excelRow.Achternaam}`
-      }
+      const columnReference = excelRow.Grafnummer.toString();
+      const columnQuery = `grave_id`;
 
       // Select all data from the tablename with a matching 'grafnummer'
       const selectQuery = {
-        text: `SELECT * FROM "${tableName}" WHERE grave_id = $1`,
-        values: [tableReference]
+        text: `SELECT * FROM "${tableName}" WHERE ${columnQuery} = $1`,
+        values: [columnReference]
       };
       const results = await client.query(selectQuery);
 
       // If a matching row is found, update it
       if (results.rows.length > 0) {
-        console.log(`Matching row with reference ${tableReference} found in ${tableName}!`);
+        console.log(`Matching row with search reference ${columnReference} found in ${tableName}!`);
         console.log(excelRow);
-        console.log(`Looking for values to be updated in row with grafnummer ${tableReference} in ${tableName}`);
+        console.log(`Looking for values to be updated in row with search reference ${columnReference} in ${tableName}`);
 
         const updateQuery = {
           text: `
@@ -65,13 +60,13 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
             functie = CASE WHEN $30::text IS NULL THEN NULL ELSE COALESCE($30::text, functie) END,
             voorheen_pupil = CASE WHEN $31::text IS NULL THEN NULL ELSE COALESCE($31::text, voorheen_pupil) END,
             bijzonderheden = CASE WHEN $32::text IS NULL THEN NULL ELSE COALESCE($32::text, bijzonderheden) END
-            WHERE ${searchReference}`,
+            WHERE ${columnQuery} = $33;`,
           values: [
             excelRow.ZichtbaarGraf, excelRow.Piketnummer, excelRow.Rol, excelRow.Achternaam, excelRow.Tussenvoegsel, excelRow.Voornamen, excelRow.Roepnaam, 
             excelRow.Leefperiode, excelRow.Geboortedatum, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Vader, excelRow.Moeder, excelRow.GehuwdMet, 
-            excelRow.DatumHuwelijk, excelRow.PlaatsHuwelijk, excelRow.Overlijden, excelRow.Leeftijd, excelRow.RedenOverlijden, excelRow.Begraven, excelRow.Urn, excelRow.Uitstrooien,
-            excelRow.Locatie, excelRow.SoortGraf, excelRow.AankomstNeerbosch, excelRow.Verblijfsduur, excelRow.Opleiding, excelRow.Sexe, excelRow.Functie, 
-            excelRow.VoorheenPupil, excelRow.Bijzonderheden
+            excelRow.DatumHuwelijk, excelRow.PlaatsHuwelijk, excelRow.Overlijden, excelRow.Leeftijd, excelRow.RedenOverlijden, excelRow.Begraven, excelRow.Urn, 
+            excelRow.Uitstrooien, excelRow.Locatie, excelRow.SoortGraf, excelRow.AankomstNeerbosch, excelRow.Verblijfsduur, excelRow.Opleiding, excelRow.Sexe, 
+            excelRow.Pupil, excelRow.Functie, excelRow.VoorheenPupil, excelRow.Bijzonderheden, columnReference
           ]
         };
 
@@ -79,11 +74,11 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
         console.log(updateQuery);
 
         await client.query(updateQuery);
-        console.log(`Successfully updated row with reference ${tableReference} in ${tableName}!`);
+        console.log(`Successfully updated row with search reference ${columnReference} in ${tableName}!`);
       } else {
         // If no matching row is found, insert a new row
-        console.log(`No matching row with reference ${tableReference} found in ${tableName}!`);
-        console.log(`Inserting row with reference ${tableReference}..`);
+        console.log(`No matching row with search reference ${columnReference} found in ${tableName}!`);
+        console.log(`Inserting row with search reference ${columnReference}..`);
         const uuid = uuidv4();
         
         const insertQuery = {
@@ -98,7 +93,8 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
           ]
         };
         await client.query(insertQuery);
-        console.log(`Successfully inserted new row with reference ${tableReference} into ${tableName}`);
+        // console.log(`Successfully inserted new row with reference ${tableReference} into ${tableName}`);
+        console.log(`Successfully inserted new row with search reference ${columnReference} into ${tableName}`);
       }
     }
   console.log(`Closing database connection..`);
