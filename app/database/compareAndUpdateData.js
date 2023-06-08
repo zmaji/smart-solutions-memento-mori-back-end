@@ -1,4 +1,5 @@
 const { v4: uuidv4 } = require('uuid');
+const moment = require('moment');
 
 async function compareAndUpdateData(excelData, tableName, client, limiter) {
   console.log(`Comparing data with database..`);
@@ -36,7 +37,7 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
             voornamen = CASE WHEN $6::text IS NULL THEN NULL ELSE COALESCE($6::text, voornamen) END,
             roepnaam = CASE WHEN $7::text IS NULL THEN NULL ELSE COALESCE($7::text, roepnaam) END,
             periode_geleefd = CASE WHEN $8::text IS NULL THEN NULL ELSE COALESCE($8::text, periode_geleefd) END,
-            geboortedatum = CASE WHEN $9::date IS NULL THEN NULL ELSE COALESCE($9::date, geboortedatum) END,
+            geboortedatum = CASE WHEN $9::text IS NULL THEN NULL ELSE COALESCE($9::text, geboortedatum) END,
             geboorteplaats = CASE WHEN $10::text IS NULL THEN NULL ELSE COALESCE($10::text, geboorteplaats) END,
             provincie = CASE WHEN $11::text IS NULL THEN NULL ELSE COALESCE($11::text, provincie) END,
             vader = CASE WHEN $12::text IS NULL THEN NULL ELSE COALESCE($12::text, vader) END,
@@ -79,17 +80,16 @@ async function compareAndUpdateData(excelData, tableName, client, limiter) {
         // If no matching row is found, insert a new row
         console.log(`No matching row with search reference ${columnReference} found in ${tableName}!`);
         console.log(`Inserting row with search reference ${columnReference}..`);
+        
         const uuid = uuidv4();
         
         const insertQuery = {
-          text: `INSERT INTO "${tableName}" (person_id, grave_id, zichtbaar_graf, piketnummer, rol, achternaam, tussenvoegsel, voornamen, roepnaam, periode_geleefd, geboortedatum, geboorteplaats, provincie, vader, moeder, gehuwd_met, datum_huwelijk, plaats_huwelijk, datum_overlijden, leeftijd_tijdens_overlijden, reden_overlijden, datum_begraven, urn, uitstrooien, locatie, soort_graf, aankomst_neerbosch, verblijfsduur, opleiding, geslacht, functie, voorheen_pupil, bijzonderheden) 
+          text: `INSERT INTO "${tableName}" (person_id, voornamen, tussenvoegsel, achternaam, roepnaam, geslacht, geboorteplaats, provincie, geboortedatum, datum_overlijden, datum_begraven, rol, functie, bijzonderheden, reden_overlijden, grave_id, zichtbaar_graf, gehuwd_met, datum_huwelijk, urn, locatie, soort_graf, aankomst_neerbosch, voorheen_pupil, vader, moeder, piketnummer, uitstrooien, verblijfsduur, opleiding, pupil, plaats_huwelijk, leeftijd_tijdens_overlijden) 
           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26, $27, $28, $29, $30, $31, $32, $33)`,
           values: [
-            uuid, excelRow.Grafnummer, excelRow.ZichtbaarGraf, excelRow.Piketnummer, excelRow.Rol, excelRow.Achternaam, excelRow.Tussenvoegsel, excelRow.Voornamen, 
-            excelRow.Roepnaam, excelRow.Leefperiode, excelRow.Geboortedatum, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Vader, excelRow.Moeder, excelRow.GehuwdMet, 
-            excelRow.DatumHuwelijk, excelRow.PlaatsHuwelijk, excelRow.Overlijden, excelRow.Leeftijd, excelRow.RedenOverlijden, excelRow.Begraven, excelRow.Urn, excelRow.Uitstrooien,
-            excelRow.Locatie, excelRow.SoortGraf, excelRow.AankomstNeerbosch, excelRow.Verblijfsduur, excelRow.Opleiding, excelRow.Sexe, excelRow.Functie, 
-            excelRow.VoorheenPupil, excelRow.Bijzonderheden
+            uuid, excelRow.Voornamen, excelRow.Tussenvoegsel, excelRow.Achternaam, excelRow.Roepnaam, excelRow.Sexe, excelRow.Geboorteplaats, excelRow.Provincie, excelRow.Geboortedatum, excelRow.Overlijden, excelRow.Begraven, excelRow.Rol, excelRow.Functie, excelRow.Bijzonderheden, excelRow.RedenOverlijden, excelRow.Grafnummer, excelRow.ZichtbaarGraf, 
+            excelRow.GehuwdMet, excelRow.DatumHuwelijk, excelRow.Urn, excelRow.Locatie, excelRow.SoortGraf, excelRow.AankomstNeerbosch, excelRow.VoorheenPupil, excelRow.Vader, 
+            excelRow.Moeder, excelRow.Piketnummer, excelRow.Uitstrooien, excelRow.Verblijfsduur, excelRow.Opleiding, excelRow.Pupil, excelRow.PlaatsHuwelijk, excelRow.Leeftijd
           ]
         };
         await client.query(insertQuery);
