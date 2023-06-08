@@ -22,6 +22,9 @@ async function getPeople(client, tableName, searchText, categories) {
   console.log(query);
 
   const result = await client.query(query);
+  
+  await client.end(); // Close the client after retrieving the people
+  
   return result.rows;
 }
 
