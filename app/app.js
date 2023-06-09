@@ -10,6 +10,7 @@ const { readExcelFile } = require('./data/readExcel');
 const { createClient } = require('./database/createClient');
 const { compareAndUpdateData } = require('./database/compareAndUpdateData');
 const { getPeople } = require('./database/getPeople');
+const { getOrphan } = require('./database/getOrphan');
 
 // Variables
 const excelFile = '../app/files/2023-StMM-Overzicht-Weezenkerkhof.xlsx'
@@ -75,6 +76,43 @@ app.get('/sync', async (req, res) => {
     res.status(500).send('Database synchronization failed!');
   }
 });
+
+app.get('/weeskinderen', async (req, res) => {
+  console.log('Visited the weeskinderen endpoint..');
+  try {
+    const databaseClient = await createClient(user, host, database, password, port);
+    const rowsByCellValue = await getOrphan(databaseClient, '"Personen"');
+    const data = {
+      AlleWeeskinderen: Object.entries(rowsByCellValue).reduce((acc, [value, rows]) => {
+        const valueWithLength = `${value} (${rows.length} kinderen)`;
+        acc[valueWithLength] = rows.map(({ voornamen, tussenvoegsel, achternaam, roepnaam, geslacht, bijzonderheden, reden_overlijden, grave_id, zichtbaar_graf, soort_graf, pupil, geboortedatum, datum_overlijden, leeftijd_tijdens_overlijden, datum_begraven }) => ({
+          voornamen,
+          tussenvoegsel,
+          achternaam,
+          roepnaam,
+          geslacht,
+          bijzonderheden,
+          reden_overlijden,
+          grave_id,
+          zichtbaar_graf,
+          soort_graf,
+          pupil,
+          geboortedatum,
+          datum_overlijden,
+          leeftijd_tijdens_overlijden,
+          datum_begraven
+        }));
+        return acc;
+      }, {})
+    };
+    res.json(data);
+    console.log('Orphans successfully retrieved');
+  } catch (error) {
+    console.error('Something went wrong retrieving orphans:', error);
+    res.status(500).send('Something went wrong retrieving orphans!');
+  }
+});
+
 
 // CronJob runs every first day of the month at 00.00 CET
 const jobCron = new CronJob('0 0 1 * *', () => {
