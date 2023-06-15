@@ -1,6 +1,6 @@
 async function getOrphan(client, tableName) {
   const columnName = 'pupil';
-  let queryText = `SELECT DISTINCT ${columnName} FROM ${tableName}`;
+  let queryText = `SELECT * FROM ${tableName} WHERE rol = '${columnName}' AND grave_id LIKE '%onbekend%'`;
 
   const query = {
     text: queryText,
@@ -15,7 +15,7 @@ async function getOrphan(client, tableName) {
   const rowsByCellValue = {};
 
   for (const value of cellValues) {
-    const queryText = `SELECT * FROM ${tableName} WHERE ${columnName} = '${value}'`;
+    const queryText = `SELECT * FROM ${tableName} WHERE ${columnName} = '${value}' AND rol = 'pupil' AND grave_id LIKE '%onbekend%'`;
     const query = {
       text: queryText,
     };

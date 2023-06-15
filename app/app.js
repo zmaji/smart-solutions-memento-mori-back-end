@@ -11,6 +11,7 @@ const { createClient } = require('./database/createClient');
 const { compareAndUpdateData } = require('./database/compareAndUpdateData');
 const { getPeople } = require('./database/getPeople');
 const { getOrphan } = require('./database/getOrphan');
+const { getAdult } = require('./database/getAdult');
 
 // Variables
 const excelFile = '../app/files/2023-StMM-Overzicht-Weezenkerkhof.xlsx'
@@ -77,46 +78,100 @@ app.get('/sync', async (req, res) => {
   }
 });
 
-app.get('/weeskinderen', async (req, res) => {
-  console.log('Visited the weeskinderen endpoint..');
-  try {
-    const databaseClient = await createClient(user, host, database, password, port);
-    const rowsByCellValue = await getOrphan(databaseClient, '"Personen"');
-    const data = {
-      AlleWeeskinderen: Object.entries(rowsByCellValue).reduce((acc, [value, rows]) => {
-        const valueWithLength = `${value} (${rows.length} kinderen)`;
-        acc[valueWithLength] = rows.map(({ voornamen, tussenvoegsel, achternaam, roepnaam, geslacht, bijzonderheden, reden_overlijden, grave_id, zichtbaar_graf, soort_graf, pupil, geboortedatum, datum_overlijden, leeftijd_tijdens_overlijden, datum_begraven }) => ({
-          voornamen,
-          tussenvoegsel,
-          achternaam,
-          roepnaam,
-          geslacht,
-          bijzonderheden,
-          reden_overlijden,
-          grave_id,
-          zichtbaar_graf,
-          soort_graf,
-          pupil,
-          geboortedatum,
-          datum_overlijden,
-          leeftijd_tijdens_overlijden,
-          datum_begraven
-        }));
-        return acc;
-      }, {})
-    };
-    res.json(data);
-    console.log('Orphans successfully retrieved');
-  } catch (error) {
-    console.error('Something went wrong retrieving orphans:', error);
-    res.status(500).send('Something went wrong retrieving orphans!');
-  }
-});
+const compareOverlijden = (a, b) => {
+  const overlijdenA = a.datum_overlijden;
+  const overlijdenB = b.datum_overlijden;
 
+  if (overlijdenA === null || overlijdenB === null) {
+    if (overlijdenA === null && overlijdenB !== null) {
+      return 1;
+    } else if (overlijdenA !== null && overlijdenB === null) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  const [dayA, monthA, yearA] = overlijdenA.split('/').map(Number);
+  const [dayB, monthB, yearB] = overlijdenB.split('/').map(Number);
+
+  if (yearA !== yearB) {
+    return yearA - yearB; 
+  }
+  if (monthA !== monthB) {
+    return monthA - monthB; 
+  }
+  return dayA - dayB; 
+};
+
+// COMMENTED SECTION AGAINST ABUSING THE ENDPOINT WITHOUT VALID AUTHORIZATION
+
+// app.get('/weeskinderen', async (req, res) => {
+//   console.log('Visited the weeskinderen endpoint..');
+//   try {
+//     const databaseClient = await createClient(user, host, database, password, port);
+//     const rowsByCellValue = await getOrphan(databaseClient, '"Personen"');
+//     const data = {
+//       AlleWeeskinderen: Object.entries(rowsByCellValue).reduce((acc, [value, rows]) => {
+//         const valueWithLength = `${value} (${rows.length} kinderen)`;
+//         const sortedRows = rows
+//           .map(({ voornamen, tussenvoegsel, achternaam, roepnaam, geslacht, bijzonderheden, reden_overlijden, grave_id, zichtbaar_graf, soort_graf, pupil, geboortedatum, datum_overlijden, leeftijd_tijdens_overlijden, datum_begraven }) => ({
+//             voornamen,
+//             tussenvoegsel,
+//             achternaam,
+//             roepnaam,
+//             geslacht,
+//             bijzonderheden,
+//             reden_overlijden,
+//             grave_id,
+//             zichtbaar_graf,
+//             soort_graf,
+//             pupil,
+//             geboortedatum,
+//             datum_overlijden,
+//             leeftijd_tijdens_overlijden,
+//             datum_begraven
+//           }))
+//           .sort(compareOverlijden);
+//         acc[valueWithLength] = sortedRows;
+//         return acc;
+//       }, {})
+//     };
+//     res.json(data);
+//     console.log('Orphans successfully retrieved');
+//   } catch (error) {
+//     console.error('Something went wrong retrieving orphans:', error);
+//     res.status(500).send('Something went wrong retrieving orphans!');
+//   }
+// });
+
+// app.get('/volwassenen', async (req, res) => {
+//   console.log('Visited the volwassenen endpoint..');
+//   try {
+//     const databaseClient = await createClient(user, host, database, password, port);
+//     const adults = await getAdult(databaseClient, '"Personen"');
+//     adults.sort(compareOverlijden);
+//     const data = {
+//       Volwassenen: adults.map(row => ({
+//         // naam: `${row.voornamen} ${row.tussenvoegsel ? row.tussenvoegsel + ' ' : ''}${row.achternaam}`,
+//         redenOverijden: `${row.reden_overlijden}`,
+//       }))
+//     };
+
+//     const count = data.Volwassenen.length; // Count the number of adults
+
+//     res.json({ count, data }); // Include the count in the response
+
+//     console.log('Adults successfully retrieved');
+//   } catch (error) {
+//     console.error('Something went wrong retrieving adults:', error);
+//     res.status(500).send('Something went wrong retrieving adults!');
+//   }
+// });
 
 // CronJob runs every first day of the month at 00.00 CET
 const jobCron = new CronJob('0 0 1 * *', () => {
-  console.log('This cronjob will run every month');
+  console.log('Executing the monthly ');
   syncDatabase();
 }, {
   timeZone: 'Europe/Amsterdam',
