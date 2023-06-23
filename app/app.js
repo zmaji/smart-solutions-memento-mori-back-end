@@ -57,7 +57,7 @@ const syncDatabase = async () => {
   const limiter = new RateLimiterQueue(new RateLimiterMemory(APILimits));
 
   // Read all people from the Excel file
-  const people = await readExcelFile(excelFile);
+  const people = await readExcelFile(excelFile); 
 
   // Create a client that connects the database to the application
   const databaseClient = await createClient(user, host, database, password, port);
